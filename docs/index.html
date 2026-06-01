@@ -29,6 +29,11 @@ features:
 extension: ""
 ---
 <style>
+  /* No filename in this mock (system-monitor monitors the system, not
+   * a document). The .drag-fill placeholder absorbs the flex space so
+   * .winbtns lands on the right edge per the suite convention. */
+  .pv-titlebar .drag-fill { flex: 1; }
+
   .sm-aux {
     display: grid;
     grid-template-rows: repeat(5, auto);
@@ -126,6 +131,7 @@ extension: ""
   .sm-row .val { color: var(--ink); font-variant-numeric: tabular-nums; }
 </style>
 <div class="pv-titlebar">
+  <span class="drag-fill"></span>
   <span class="winbtns">─ ▢ ✕</span>
 </div>
 <div class="sm-grid">
