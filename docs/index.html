@@ -1,0 +1,170 @@
+---
+layout: app
+tagline: a glanceable system-load hint for Linux
+description: A calm system monitor for Linux. CPU, memory, storage, Docker images and GPU — one glance, no process tables, no graphs wall.
+og_description: A calm system monitor for Linux. Free and open source.
+eyebrow: A system monitor for Linux
+heading: "Where is your laptop <em>slow</em>?"
+lede: A glance tool, not a process manager. The computer feels slow — open this, see which application is hot, close it. CPU, memory, storage, Docker images, GPU. Calm by design.
+features_heading: One glance. The answer.
+features:
+  - tag: Five tabs
+    title: CPU, Memory, Storage, Docker, GPU
+    blurb: Each tab is a single calm view of one resource. No 400-row process table, no graphs wall.
+  - tag: Live
+    title: 2s refresh
+    blurb: CPU and Memory update every two seconds. GPU utilization too, when an NVIDIA card is detected.
+  - tag: Quiet quit
+    title: Hover a row, click the X
+    blurb: Sends SIGTERM to every process in the group with a confirm. The system shell is still the escalation for force-kill.
+  - tag: Drill-down
+    title: Where is the disk going?
+    blurb: One click into Pictures, Cache, .local/share, then deeper. Bars show share of disk; Open jumps to the file manager.
+  - tag: Calm
+    title: Three-state traffic light
+    blurb: A single colored dot per row tells you whether anything's hot. No 12-line summary, no notifications.
+  - tag: Tauri · Rust
+    title: Native Linux
+    blurb: Small binary. Real .desktop entry. AppImage and .deb. No Electron.
+extension: ""
+---
+<style>
+  .sm-aux {
+    display: grid;
+    grid-template-rows: repeat(5, auto);
+    gap: 8px;
+    padding: 24px 20px;
+    background: rgba(48, 52, 63, 0.03);
+    border-right: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    min-width: 180px;
+  }
+  .sm-aux-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 6px;
+  }
+  .sm-aux-item[data-active="true"] {
+    background: rgba(48, 52, 63, 0.06);
+    color: var(--ink);
+  }
+  .sm-aux-head {
+    display: flex;
+    justify-content: space-between;
+  }
+  .sm-bar {
+    height: 4px;
+    background: var(--rule);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .sm-fill { height: 100%; background: #6E8C6A; }
+  .sm-fill.warn { background: #C9A85A; }
+  .sm-fill.high { background: var(--accent); }
+  .sm-row {
+    display: flex;
+    flex-direction: column;
+  }
+  .sm-grid {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    min-height: 320px;
+  }
+  .sm-main {
+    padding: 28px 32px;
+  }
+  .sm-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .sm-strip-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--mono);
+  }
+  .sm-strip-label { color: var(--muted); font-size: 12px; }
+  .sm-strip-value { color: var(--ink); font-size: 28px; }
+  .sm-strip-bar {
+    height: 8px;
+    background: var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .sm-strip-fill { height: 100%; background: #6E8C6A; }
+  .sm-strip-sub {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .sm-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .sm-row .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #6E8C6A;
+    margin-right: 8px;
+  }
+  .sm-row .dot.warn { background: #C9A85A; }
+  .sm-row .dot.high { background: var(--accent); }
+  .sm-row .val { color: var(--ink); font-variant-numeric: tabular-nums; }
+</style>
+<div class="pv-titlebar">
+  <span class="winbtns">─ ▢ ✕</span>
+</div>
+<div class="sm-grid">
+  <nav class="sm-aux">
+    <div class="sm-aux-item" data-active="true">
+      <div class="sm-aux-head"><span>CPU</span><span>34%</span></div>
+      <div class="sm-bar"><div class="sm-fill warn" style="width: 34%"></div></div>
+    </div>
+    <div class="sm-aux-item">
+      <div class="sm-aux-head"><span>Memory</span><span>62%</span></div>
+      <div class="sm-bar"><div class="sm-fill high" style="width: 62%"></div></div>
+    </div>
+    <div class="sm-aux-item">
+      <div class="sm-aux-head"><span>Storage</span><span>74%</span></div>
+      <div class="sm-bar"><div class="sm-fill warn" style="width: 74%"></div></div>
+    </div>
+    <div class="sm-aux-item">
+      <div class="sm-aux-head"><span>Docker</span><span>12</span></div>
+      <div class="sm-bar"><div class="sm-fill" style="width: 0%"></div></div>
+    </div>
+    <div class="sm-aux-item">
+      <div class="sm-aux-head"><span>GPU</span><span>21%</span></div>
+      <div class="sm-bar"><div class="sm-fill" style="width: 21%"></div></div>
+    </div>
+  </nav>
+  <div class="sm-main">
+    <div class="sm-strip">
+      <div class="sm-strip-head"><span class="sm-strip-label">CPU</span><span class="sm-strip-value">34%</span></div>
+      <div class="sm-strip-bar"><div class="sm-strip-fill" style="width: 34%; background: #C9A85A"></div></div>
+      <div class="sm-strip-sub">8 cores</div>
+    </div>
+    <div class="sm-row"><span><span class="dot high"></span>chromium</span><span class="val">58%</span></div>
+    <div class="sm-row"><span><span class="dot warn"></span>node</span><span class="val">31%</span></div>
+    <div class="sm-row"><span><span class="dot warn"></span>code</span><span class="val">28%</span></div>
+    <div class="sm-row"><span><span class="dot"></span>gnome-shell</span><span class="val">7%</span></div>
+    <div class="sm-row"><span><span class="dot"></span>System</span><span class="val">3%</span></div>
+  </div>
+</div>
+<div class="pv-status">
+  <span>v0.1.0</span>
+  <span>5 apps · updated just now</span>
+</div>

@@ -1,0 +1,15 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  release:
+    uses: krill-software/.github/.github/workflows/krill-app-release.yml@main
+    with:
+      product-name: "System Monitor"
+    secrets: inherit
+    permissions:
+      contents: write
