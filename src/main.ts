@@ -3,11 +3,9 @@ import "./styles.css";
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
   buildFilterInput,
   buildLoader,
-  checkForUpdates,
   mountChrome,
   showBootError,
 } from "@krill-software/desktop-ui";
@@ -106,7 +104,6 @@ function memStatus(memFrac: number): Status {
 // ---- DOM refs -------------------------------------------------------
 
 let auxEl: HTMLElement;
-let viewportEl: HTMLElement;
 let mainContentEl: HTMLElement;
 
 let view: View = "cpu";
@@ -150,70 +147,6 @@ function formatPct(x: number): string {
   return `${Math.round(x)}%`;
 }
 
-// ---- Shell topbars --------------------------------------------------
-
-function buildMainTopbar(): HTMLElement {
-  const bar = el("div", { class: "main-topbar", "data-tauri-drag-region": "true" });
-  const min = el("button", { class: "main-topbar-btn", type: "button", title: "Minimize" });
-  min.append(iconSvg("minus"));
-  min.addEventListener("click", () => { void getCurrentWindow().minimize(); });
-  const max = el("button", { class: "main-topbar-btn", type: "button", title: "Maximize" });
-  max.append(iconSvg("square"));
-  max.addEventListener("click", () => { void getCurrentWindow().toggleMaximize(); });
-  const close = el("button", {
-    class: "main-topbar-btn",
-    type: "button",
-    title: "Close",
-    "data-kind": "close",
-  });
-  close.append(iconSvg("x"));
-  close.addEventListener("click", () => { void getCurrentWindow().close(); });
-  bar.append(min, max, close);
-  return bar;
-}
-
-function buildAuxTopbar(): HTMLElement {
-  const bar = el("div", { class: "aux-topbar", "data-tauri-drag-region": "true" });
-  const hamburger = el("button", { class: "main-topbar-btn", type: "button", title: "Menu" });
-  hamburger.append(iconSvg("menu"));
-  hamburger.addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleHamburgerMenu(bar);
-  });
-  bar.append(hamburger);
-  return bar;
-}
-
-function toggleHamburgerMenu(anchor: HTMLElement): void {
-  const existing = document.querySelector(".menu-popover");
-  if (existing) { existing.remove(); return; }
-  const pop = el("div", { class: "menu-popover" });
-  const items: Array<{ label: string; action: () => void } | { sep: true }> = [
-    { label: "Check for updates…", action: () => void checkForUpdates("System Monitor") },
-    { sep: true },
-    { label: "Quit", action: () => void getCurrentWindow().close() },
-  ];
-  for (const it of items) {
-    if ("sep" in it) {
-      pop.append(el("div", { class: "menu-popover-sep" }));
-    } else {
-      const btn = el("button", { class: "menu-popover-item", type: "button" }, it.label);
-      btn.addEventListener("click", () => { pop.remove(); it.action(); });
-      pop.append(btn);
-    }
-  }
-  anchor.parentElement?.append(pop);
-  setTimeout(() => {
-    const handler = (ev: MouseEvent) => {
-      if (!pop.contains(ev.target as Node)) {
-        pop.remove();
-        document.removeEventListener("click", handler);
-      }
-    };
-    document.addEventListener("click", handler);
-  }, 0);
-}
-
 // ---- Aux sidebar — category nav -------------------------------------
 
 const VIEWS: Array<{ id: View; label: string; icon: string }> = [
@@ -245,8 +178,11 @@ function viewDisabledReason(id: View): string | null {
 }
 
 function renderAux(): void {
+  // The aux strip (hamburger) is owned by desktop-ui's app layout — keep it
+  // and re-render only system-monitor's own nav content below it.
+  const strip = auxEl.querySelector(".aux-topbar");
   auxEl.replaceChildren();
-  auxEl.append(buildAuxTopbar());
+  if (strip) auxEl.append(strip);
 
   for (const item of VIEWS) {
     const available = viewAvailable(item.id);
@@ -286,7 +222,6 @@ function renderAux(): void {
     auxEl.append(btn);
   }
 
-  auxEl.append(el("div", { class: "aux-version" }, `v${__APP_VERSION__}`));
   updateAuxValues();
 }
 
@@ -408,8 +343,9 @@ function mountMain(): void {
   });
   apps.append(filter.element);
 
-  const headRow = el("div", { class: "row row-head" });
+  const headRow = el("div", { class: "row row-head row-proc" });
   headRow.append(el("div", { class: "cell cell-name" }, ""));
+  headRow.append(el("div", { class: "cell cell-pid" }, "pid"));
   headRow.append(el("div", { class: "cell cell-value", id: "rows-head-value" },
     view === "cpu" ? "cpu" : "memory"));
   headRow.append(el("div", { class: "cell cell-kill" }, ""));
@@ -454,6 +390,16 @@ function renderSystem(snap: Snapshot): void {
   subEl.textContent = sub;
 }
 
+/** PID column text for a group. Pids arrive sorted ascending, so the
+ *  first is the lowest — the group's "leader". A single-process group
+ *  shows just that pid; a multi-process group appends the overflow
+ *  count; the synthetic System bucket has no pids, so it shows a dash. */
+function pidLabel(pids: number[]): string {
+  if (pids.length === 0) return "—";
+  if (pids.length === 1) return String(pids[0]);
+  return `${pids[0]} (+${pids.length - 1} more)`;
+}
+
 /** Replace just the rows-list contents. The filter input + the
  *  section's header row are kept intact — that's what keeps focus
  *  + caret stable across both ticks and view-internal re-renders. */
@@ -483,26 +429,32 @@ function renderRowList(snap: Snapshot): void {
       ? (snap.first_sample ? "—" : formatPct(g.cpu_per_core))
       : formatBytes(g.mem_bytes);
 
-    const row = el("div", { class: "row", "data-status": status });
+    const row = el("div", { class: "row row-proc", "data-status": status });
     const name = el("div", { class: "cell cell-name" });
     const dot = el("span", { class: "dot", "data-status": status });
     name.append(dot, el("span", { class: "name" }, g.name));
     row.append(name);
+    row.append(el("div", { class: "cell cell-pid" }, pidLabel(g.pids)));
     const value = el("div", { class: "cell cell-value", "data-status": status }, valueText);
     row.append(value);
 
+    // Keep the cell for grid alignment, but only offer a kill button when
+    // there's actually something to signal. The synthetic "System" row that
+    // absorbs shared/kernel memory carries no pids — nothing to quit.
     const killCell = el("div", { class: "cell cell-kill" });
-    const killBtn = el("button", {
-      class: "kill-btn",
-      type: "button",
-      title: `Quit ${g.name} (${g.pids.length} ${g.pids.length === 1 ? "process" : "processes"})`,
-    });
-    killBtn.append(iconSvg("x-square", "kill-icon"));
-    killBtn.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      void killGroup(g);
-    });
-    killCell.append(killBtn);
+    if (g.pids.length > 0) {
+      const killBtn = el("button", {
+        class: "kill-btn",
+        type: "button",
+        title: `Quit ${g.name} (${g.pids.length} ${g.pids.length === 1 ? "process" : "processes"})`,
+      });
+      killBtn.append(iconSvg("x-square", "kill-icon"));
+      killBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        void killGroup(g);
+      });
+      killCell.append(killBtn);
+    }
     row.append(killCell);
 
     list.append(row);
@@ -1109,22 +1061,19 @@ function iconSvg(kind: string, cls?: string): SVGSVGElement {
 async function boot() {
   const chrome = mountChrome({
     productName: "System Monitor",
+    version: __APP_VERSION__,
+    layout: "app",
     actions: {},
     showAuxPane: true,
-    showStatusLine: false,
     updater: true,
   });
-  viewportEl = chrome.viewport;
   auxEl = chrome.aux!;
   auxEl.setAttribute("aria-label", "Views");
 
-  // Shell-app layout: the main pane gets its own topbar (drag region +
-  // window controls), and a separate scrollable content area that the
-  // renderers swap. The desktop-ui titlebar + status line are hidden
-  // via styles.css for this app.
-  const topbar = buildMainTopbar();
-  mainContentEl = el("div", { class: "main-content" });
-  viewportEl.replaceChildren(topbar, mainContentEl);
+  // App layout: desktop-ui provides the main pane's top strip (window
+  // controls) + the aux hamburger menu. renderMain swaps the children of
+  // the scroll area it hands back.
+  mainContentEl = chrome.mainContent!;
 
   // One-shot capability probe. Decides which sidebar tabs render
   // active vs. muted.

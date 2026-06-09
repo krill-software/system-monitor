@@ -1,11 +1,11 @@
 /* ============================================================
  * System Monitor — app-local styles.
  *
- * Shell-app layout (matches file-drop, photo-importer): no
- * desktop-ui titlebar, no status line. Each pane carries its own
- * topbar — aux holds the hamburger; main holds drag region +
- * window controls. The aux pane is subtly tinted, version label
- * pinned at its bottom.
+ * App layout (mountChrome({ layout: "app" })): the in-viewport top
+ * strip (window controls), the aux hamburger menu, and the version
+ * about-line all come from desktop-ui. Only system-monitor's own
+ * surfaces (sidebar nav rows, system strips, list rows) live here.
+ * The aux pane is subtly tinted.
  *
  * Type rules (binding):
  *  - Bundled --fm-mono only; the package chain starts JetBrains
@@ -21,28 +21,27 @@
  * ============================================================ */
 
 :root {
-  --status-ok:   #6E8C6A;
-  --status-warn: #C9A85A;
+  --status-ok: #6e8c6a;
+  --status-warn: #c9a85a;
   --status-high: var(--fm-accent);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --status-ok:   #94B58F;
-    --status-warn: #E0BB6A;
+    --status-ok: #94b58f;
+    --status-warn: #e0bb6a;
   }
 }
 
 /* Whole-app font lock + smoothing — every descendant inherits. */
-html, body {
+html,
+body {
   font-family: var(--fm-mono);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* === Shell-app chrome ============================================== */
-
-#titlebar, #status-line { display: none; }
+/* === Aux pane ====================================================== */
 
 /* Subtle sidebar tint; main stays pure Ghost White. */
 #aux {
@@ -53,87 +52,7 @@ html, body {
   padding: 0;
 }
 
-/* Top strip in the main pane: drag region + icon-button window
- * controls on the right. Matches desktop-ui's default #titlebar:
- *   - 44px tall, 16px symmetric gutter
- *   - 9px gap between buttons
- *   - 22×22 rounded buttons with 12×12 glyphs (1.2 stroke) */
-.main-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 9px;
-  height: 44px;
-  padding: 0 16px;
-  flex-shrink: 0;
-  background: var(--fm-bg);
-}
-.main-topbar-btn {
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--fm-muted);
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 0;
-  transition: background-color 100ms ease, color 100ms ease;
-}
-.main-topbar-btn:hover { background: var(--fm-rule); color: var(--fm-text); }
-.main-topbar > .main-topbar-btn[data-kind="close"]:hover {
-  background: #e8a5a5;
-  color: var(--fm-text);
-}
-.main-topbar-btn svg { width: 12px; height: 12px; }
-
-/* Sidebar topbar: hamburger + drag region. Same 44px / 16px so the
- * chrome rows align across the split. */
-.aux-topbar {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 44px;
-  padding: 0 16px;
-  flex-shrink: 0;
-}
-
-/* Hamburger dropdown. */
-.menu-popover {
-  position: absolute;
-  top: 48px;
-  left: 16px;
-  min-width: 180px;
-  background: var(--fm-bg);
-  border: 1px solid var(--fm-rule-strong);
-  border-radius: 4px;
-  box-shadow: 0 4px 16px rgba(48, 52, 63, 0.16);
-  padding: 4px 0;
-  z-index: 1000;
-}
-.menu-popover-item {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 6px 12px;
-  border: none;
-  background: transparent;
-  font: inherit;
-  font-size: 13px;
-  color: var(--fm-text);
-  text-align: left;
-  cursor: pointer;
-}
-.menu-popover-item:hover { background: var(--fm-rule); }
-.menu-popover-sep {
-  height: 1px;
-  background: var(--fm-rule);
-  margin: 4px 0;
-}
-
-/* === Aux pane (nav rows below the topbar) ========================== */
+/* === Aux pane (nav rows below the strip) =========================== */
 
 .aux-item {
   display: flex;
@@ -147,9 +66,14 @@ html, body {
   font-family: var(--fm-mono);
   font-size: 12px;
   text-align: left;
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
-.aux-item:hover { background: var(--fm-rule); color: var(--fm-text); }
+.aux-item:hover {
+  background: var(--fm-rule);
+  color: var(--fm-text);
+}
 .aux-item[data-active="true"] {
   background: var(--fm-rule);
   color: var(--fm-text);
@@ -162,7 +86,12 @@ html, body {
   background: transparent;
   color: var(--fm-muted);
 }
-.aux-icon { width: 16px; height: 16px; flex-shrink: 0; align-self: center; }
+.aux-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  align-self: center;
+}
 
 .aux-body {
   flex: 1;
@@ -177,7 +106,9 @@ html, body {
   align-items: baseline;
   gap: 8px;
 }
-.aux-label { color: inherit; }
+.aux-label {
+  color: inherit;
+}
 .aux-pct {
   color: var(--fm-muted);
   font-variant-numeric: tabular-nums;
@@ -193,33 +124,24 @@ html, body {
   height: 100%;
   width: 0%;
   background: var(--status-ok);
-  transition: width 300ms ease, background 200ms ease;
+  transition:
+    width 300ms ease,
+    background 200ms ease;
 }
-.aux-item[data-status="warn"] .aux-fill { background: var(--status-warn); }
-.aux-item[data-status="high"] .aux-fill { background: var(--status-high); }
-.aux-item[data-status="warn"] .aux-pct { color: var(--status-warn); }
-.aux-item[data-status="high"] .aux-pct { color: var(--status-high); }
-
-.aux-version {
-  margin-top: auto;
-  padding: 10px 12px;
-  color: var(--fm-muted);
-  font-family: var(--fm-mono);
-  font-size: 11px;
+.aux-item[data-status="warn"] .aux-fill {
+  background: var(--status-warn);
 }
-
-/* === Main pane container ========================================== */
-
-/* #viewport hosts the main-topbar + scrollable content stacked
- * vertically. desktop-ui's grid only sets `min-height: 0` on it;
- * the flex-column + per-child overflow rules below are local. */
-#viewport {
-  display: flex;
-  flex-direction: column;
-  position: relative;
+.aux-item[data-status="high"] .aux-fill {
+  background: var(--status-high);
+}
+.aux-item[data-status="warn"] .aux-pct {
+  color: var(--status-warn);
+}
+.aux-item[data-status="high"] .aux-pct {
+  color: var(--status-high);
 }
 
-/* === Main content (below the main topbar) ========================= */
+/* === Main content (the scroll area handed back by desktop-ui) ===== */
 
 .main-content {
   flex: 1;
@@ -231,18 +153,29 @@ html, body {
   gap: 20px;
 }
 
-.section { display: flex; flex-direction: column; gap: 12px; }
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
 /* ---- System strip ------------------------------------------ */
 
-.sys-item { display: flex; flex-direction: column; gap: 8px; }
+.sys-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .sys-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   font-family: var(--fm-mono);
 }
-.sys-label { color: var(--fm-muted); font-size: 12px; }
+.sys-label {
+  color: var(--fm-muted);
+  font-size: 12px;
+}
 .sys-value {
   color: var(--fm-text);
   font-size: 28px;
@@ -262,12 +195,22 @@ html, body {
 .sys-fill {
   height: 100%;
   background: var(--status-ok);
-  transition: width 300ms ease, background 200ms ease;
+  transition:
+    width 300ms ease,
+    background 200ms ease;
 }
-.sys-item[data-status="warn"] .sys-fill { background: var(--status-warn); }
-.sys-item[data-status="high"] .sys-fill { background: var(--status-high); }
-.sys-item[data-status="warn"] .sys-value { color: var(--status-warn); }
-.sys-item[data-status="high"] .sys-value { color: var(--status-high); }
+.sys-item[data-status="warn"] .sys-fill {
+  background: var(--status-warn);
+}
+.sys-item[data-status="high"] .sys-fill {
+  background: var(--status-high);
+}
+.sys-item[data-status="warn"] .sys-value {
+  color: var(--status-warn);
+}
+.sys-item[data-status="high"] .sys-value {
+  color: var(--status-high);
+}
 
 /* Filter input + loader styles now live in desktop-ui (v0.10.0+):
  *   - .fm-filter-row / .fm-filter-input
@@ -294,7 +237,21 @@ html, body {
   padding-bottom: 6px;
   border-bottom: 1px solid var(--fm-rule-strong);
 }
-.row:last-child { border-bottom: none; }
+.row:last-child {
+  border-bottom: none;
+}
+
+/* Process list (CPU / Memory) carries an extra PID column. Scoped so the
+ * storage / docker lists keep their own 3-column layout. */
+.row-proc {
+  grid-template-columns: 1fr auto auto auto;
+}
+.cell-pid {
+  font-variant-numeric: tabular-nums;
+  color: var(--fm-muted);
+  text-align: right;
+  white-space: nowrap;
+}
 
 .cell-name {
   display: flex;
@@ -335,15 +292,23 @@ html, body {
   color: var(--fm-muted);
   padding: 0;
   opacity: 0;
-  transition: opacity 100ms ease, background-color 100ms ease, color 100ms ease;
+  transition:
+    opacity 100ms ease,
+    background-color 100ms ease,
+    color 100ms ease;
 }
 .row:hover .kill-btn,
-.kill-btn:focus { opacity: 1; }
+.kill-btn:focus {
+  opacity: 1;
+}
 .kill-btn:hover {
   background: #e8a5a5;
   color: var(--fm-text);
 }
-.kill-icon { width: 14px; height: 14px; }
+.kill-icon {
+  width: 14px;
+  height: 14px;
+}
 
 /* ---- Storage view ----------------------------------------- */
 
@@ -370,7 +335,9 @@ html, body {
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 3px;
-  transition: background 100ms ease, color 100ms ease;
+  transition:
+    background 100ms ease,
+    color 100ms ease;
 }
 .breadcrumb-link:hover {
   background: var(--fm-rule);
@@ -393,7 +360,10 @@ html, body {
   color: var(--fm-muted);
   padding: 4px 10px;
   cursor: pointer;
-  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+  transition:
+    background 100ms ease,
+    color 100ms ease,
+    border-color 100ms ease;
 }
 .storage-refresh:hover {
   background: var(--fm-rule);
@@ -406,8 +376,12 @@ html, body {
 .storage-row {
   grid-template-columns: 1fr 96px auto auto;
 }
-.storage-row.clickable { cursor: pointer; }
-.storage-row.clickable:hover { background: var(--fm-rule); }
+.storage-row.clickable {
+  cursor: pointer;
+}
+.storage-row.clickable:hover {
+  background: var(--fm-rule);
+}
 
 .row-icon {
   width: 14px;
@@ -416,7 +390,10 @@ html, body {
   flex-shrink: 0;
 }
 
-.cell-bar { display: flex; align-items: center; }
+.cell-bar {
+  display: flex;
+  align-items: center;
+}
 .row-bar {
   width: 100%;
   height: 6px;
@@ -430,10 +407,16 @@ html, body {
   background: var(--status-ok);
   transition: width 300ms ease;
 }
-.row-fill[data-status="warn"] { background: var(--status-warn); }
-.row-fill[data-status="high"] { background: var(--status-high); }
+.row-fill[data-status="warn"] {
+  background: var(--status-warn);
+}
+.row-fill[data-status="high"] {
+  background: var(--status-high);
+}
 
-.storage-actions { width: 24px; }
+.storage-actions {
+  width: 24px;
+}
 
 /* Docker row: two-line name (label + id/created) using a stacked
  * column inside cell-name. */
@@ -477,11 +460,20 @@ html, body {
   flex-shrink: 0;
   transition: background 200ms ease;
 }
-.dot[data-status="warn"] { background: var(--status-warn); }
-.dot[data-status="high"] { background: var(--status-high); }
+.dot[data-status="warn"] {
+  background: var(--status-warn);
+}
+.dot[data-status="high"] {
+  background: var(--status-high);
+}
 
-.cell-value[data-status="warn"] { color: var(--status-warn); }
-.cell-value[data-status="high"] { color: var(--status-high); font-weight: 600; }
+.cell-value[data-status="warn"] {
+  color: var(--status-warn);
+}
+.cell-value[data-status="high"] {
+  color: var(--status-high);
+  font-weight: 600;
+}
 
 .placeholder {
   color: var(--fm-muted);
