@@ -8,8 +8,8 @@
  * The aux pane is subtly tinted.
  *
  * Type rules (binding):
- *  - Bundled --fm-mono only; the package chain starts JetBrains
- *    Mono → Hasklig and both ship with desktop-ui.
+ *  - Bundled --fm-mono only — JetBrains Mono, which ships with
+ *    desktop-ui.
  *  - Whole-pixel font-sizes only — no 10.5px / 12.5px. Subpixel
  *    sizes force WebKit on Linux into the fuzzy hint path
  *    (STYLE.md → "Always pick whole-pixel font sizes").
