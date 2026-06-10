@@ -97,6 +97,14 @@ async fn tick(ctx: &AppCtx) -> Snapshot {
     let mut by_group: std::collections::HashMap<String, (String, GroupRow)> =
         std::collections::HashMap::new();
     for (pid, proc) in sys.processes() {
+        // `sys.processes()` lists every non-main thread as its own entry,
+        // and each thread shares its process's address space — so
+        // `proc.memory()` on a thread reports the *whole* process RSS.
+        // Summing those would multiply each app's memory (and CPU) by its
+        // thread count. Count real processes only; skip threads.
+        if proc.thread_kind().is_some() {
+            continue;
+        }
         let (id, name) = groups::classify(*pid, proc);
         let entry = by_group
             .entry(id.clone())
@@ -131,6 +139,43 @@ async fn tick(ctx: &AppCtx) -> Snapshot {
     // metrics is noise (kernel helpers, idle daemons). Keeps the row count
     // manageable without virtualization.
     groups.retain(|g| g.cpu_per_core >= 1.0 || g.mem_frac >= 0.005);
+
+    // Reconcile the visible rows with the "used" figure the header bar
+    // shows (MemTotal - MemAvailable). Process RSS never sums to that:
+    // shared memory (tmpfs/shmem, GPU buffers), kernel slab / page tables,
+    // and the tiny groups dropped just above are all "used" but owned by no
+    // app. Fold that remainder into the System line so the list reads as a
+    // rough whole instead of leaving a multi-GB gap. saturating_sub guards
+    // the rare case where summed RSS — which over-counts shared pages —
+    // already exceeds "used".
+    let listed_rss: u64 = groups.iter().map(|g| g.mem_bytes).sum();
+    let remainder = mem_used.saturating_sub(listed_rss);
+    if remainder > 0 {
+        if !groups.iter().any(|g| g.id == "System") {
+            groups.push(GroupRow {
+                id: "System".to_string(),
+                name: "System".to_string(),
+                pids: Vec::new(),
+                cpu_per_core: 0.0,
+                mem_bytes: 0,
+                mem_frac: 0.0,
+            });
+        }
+        let sys_row = groups
+            .iter_mut()
+            .find(|g| g.id == "System")
+            .expect("System row just ensured to exist");
+        sys_row.mem_bytes += remainder;
+        sys_row.mem_frac = if mem_total > 0 {
+            (sys_row.mem_bytes as f32) / (mem_total as f32)
+        } else {
+            0.0
+        };
+        // System is now a catch-all bucket (kernel threads + shared/kernel
+        // memory), not a quittable app. Drop the pids so the UI shows no
+        // kill button — SIGTERM to kernel threads is rejected anyway.
+        sys_row.pids.clear();
+    }
 
     // Stable pid order so the frontend can dedupe / display "N processes"
     // identically across ticks.
