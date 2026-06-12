@@ -28,26 +28,30 @@ features:
     blurb: Small binary. Real .desktop entry. AppImage and .deb. No Electron.
 extension: ""
 mock:
-  state: '5 apps · updated just now'
+  chrome: app
 ---
 <style>
-  /* No filename in this mock (system-monitor monitors the system, not
-   * a document). The .drag-fill placeholder absorbs the flex space so
-   * .winbtns lands on the right edge per the suite convention. */
-  .pv-titlebar .drag-fill { flex: 1; }
-
-  .sm-aux {
+  /* App-layout mock (mock.chrome: app — no titlebar / status line):
+   * hamburger + five-tab rail on the left, the CPU view in the main
+   * pane with the in-viewport window controls top-right. Status dots
+   * are the app's domain tokens (ok/warn) + accent (high). */
+  .sm-app {
     display: grid;
-    grid-template-rows: repeat(5, auto);
-    gap: 8px;
-    padding: 24px 20px;
-    background: rgba(48, 52, 63, 0.03);
-    border-right: 1px solid var(--rule);
+    grid-template-columns: 180px 1fr;
+    min-height: 360px;
     font-family: var(--mono);
     font-size: 12px;
-    color: var(--muted);
-    min-width: 180px;
   }
+  .sm-aux {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px 24px;
+    background: rgba(48, 52, 63, 0.03);
+    border-right: 1px solid var(--rule);
+    color: var(--muted);
+  }
+  .sm-burger { color: var(--muted); font-size: 14px; padding: 2px 6px 8px; }
   .sm-aux-item {
     display: flex;
     flex-direction: column;
@@ -72,29 +76,27 @@ mock:
   .sm-fill { height: 100%; background: #6E8C6A; }
   .sm-fill.warn { background: #C9A85A; }
   .sm-fill.high { background: var(--accent); }
-  .sm-row {
-    display: flex;
-    flex-direction: column;
-  }
-  .sm-grid {
-    display: grid;
-    grid-template-columns: 180px 1fr;
-    min-height: 320px;
-  }
+
   .sm-main {
-    padding: 28px 32px;
+    padding: 12px 24px 24px;
+  }
+  .sm-winbtns {
+    text-align: right;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
   }
   .sm-strip {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
   .sm-strip-head {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-family: var(--mono);
   }
   .sm-strip-label { color: var(--muted); font-size: 12px; }
   .sm-strip-value { color: var(--ink); font-size: 28px; }
@@ -104,22 +106,32 @@ mock:
     border-radius: 4px;
     overflow: hidden;
   }
-  .sm-strip-fill { height: 100%; background: #6E8C6A; }
+  .sm-strip-fill { height: 100%; }
   .sm-strip-sub {
     color: var(--muted);
-    font-family: var(--mono);
     font-size: 11px;
   }
+
+  /* Filter input — desktop-ui's .fm-filter-input, placeholder shown. */
+  .sm-filter {
+    padding: 6px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 4px;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  /* Rows: name · pid · value · quit (revealed on hover). */
   .sm-row {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto minmax(56px, auto) 24px;
     align-items: center;
-    gap: 12px;
-    padding: 6px 4px;
+    gap: 16px;
+    padding: 7px 4px;
     border-bottom: 1px solid var(--rule);
-    font-family: var(--mono);
-    font-size: 12px;
   }
+  .sm-row:last-child { border-bottom: none; }
   .sm-row .dot {
     display: inline-block;
     width: 8px;
@@ -130,10 +142,42 @@ mock:
   }
   .sm-row .dot.warn { background: #C9A85A; }
   .sm-row .dot.high { background: var(--accent); }
-  .sm-row .val { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .sm-row .pid {
+    color: var(--muted);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .sm-row .val {
+    color: var(--ink);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .sm-row .kill {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .sm-head {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .sm-head .pid, .sm-head .val { color: inherit; }
+  /* One row depicted hovered — the quit (✕) button is visible. */
+  .sm-row.hover { background: rgba(48, 52, 63, 0.04); }
+
+  @media (max-width: 720px) {
+    .sm-app { grid-template-columns: 1fr; }
+    .sm-aux { display: none; }
+  }
 </style>
-<div class="sm-grid">
+<div class="sm-app">
   <nav class="sm-aux">
+    <div class="sm-burger">☰</div>
     <div class="sm-aux-item" data-active="true">
       <div class="sm-aux-head"><span>CPU</span><span>34%</span></div>
       <div class="sm-bar"><div class="sm-fill warn" style="width: 34%"></div></div>
@@ -156,15 +200,18 @@ mock:
     </div>
   </nav>
   <div class="sm-main">
+    <div class="sm-winbtns">─ ▢ ✕</div>
     <div class="sm-strip">
       <div class="sm-strip-head"><span class="sm-strip-label">CPU</span><span class="sm-strip-value">34%</span></div>
       <div class="sm-strip-bar"><div class="sm-strip-fill" style="width: 34%; background: #C9A85A"></div></div>
       <div class="sm-strip-sub">8 cores</div>
     </div>
-    <div class="sm-row"><span><span class="dot high"></span>chromium</span><span class="val">58%</span></div>
-    <div class="sm-row"><span><span class="dot warn"></span>node</span><span class="val">31%</span></div>
-    <div class="sm-row"><span><span class="dot warn"></span>code</span><span class="val">28%</span></div>
-    <div class="sm-row"><span><span class="dot"></span>gnome-shell</span><span class="val">7%</span></div>
-    <div class="sm-row"><span><span class="dot"></span>System</span><span class="val">3%</span></div>
+    <div class="sm-filter">Filter by name…</div>
+    <div class="sm-row sm-head"><span></span><span class="pid">pid</span><span class="val">cpu</span><span></span></div>
+    <div class="sm-row"><span><span class="dot high"></span>chromium</span><span class="pid">2841 (+12 more)</span><span class="val">58%</span><span></span></div>
+    <div class="sm-row hover"><span><span class="dot warn"></span>node</span><span class="pid">30772 (+3 more)</span><span class="val">31%</span><span class="kill">✕</span></div>
+    <div class="sm-row"><span><span class="dot warn"></span>code</span><span class="pid">5120 (+9 more)</span><span class="val">28%</span><span></span></div>
+    <div class="sm-row"><span><span class="dot"></span>gnome-shell</span><span class="pid">1834</span><span class="val">7%</span><span></span></div>
+    <div class="sm-row"><span><span class="dot"></span>System</span><span class="pid">—</span><span class="val">3%</span><span></span></div>
   </div>
 </div>
