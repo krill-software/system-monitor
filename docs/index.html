@@ -3,8 +3,6 @@ layout: app
 tagline: a glanceable system-load hint for Linux
 description: A calm system monitor for Linux. CPU, memory, storage, Docker images and GPU — one glance, no process tables, no graphs wall.
 og_description: A calm system monitor for Linux. Free and open source.
-eyebrow: A system monitor for Linux
-heading: "Where is your laptop <em>slow</em>?"
 lede: A glance tool, not a process manager. The computer feels slow — open this, see which application is hot, close it. CPU, memory, storage, Docker images, GPU. Calm by design.
 features_heading: One glance. The answer.
 features:
@@ -47,7 +45,7 @@ mock:
     flex-direction: column;
     gap: 8px;
     padding: 10px 12px 24px;
-    background: rgba(48, 52, 63, 0.03);
+    background: rgba(var(--ink-rgb), 0.03);
     border-right: 1px solid var(--rule);
     color: var(--muted);
   }
@@ -60,7 +58,7 @@ mock:
     border-radius: 6px;
   }
   .sm-aux-item[data-active="true"] {
-    background: rgba(48, 52, 63, 0.06);
+    background: rgba(var(--ink-rgb), 0.06);
     color: var(--ink);
   }
   .sm-aux-head {
@@ -73,8 +71,14 @@ mock:
     border-radius: 2px;
     overflow: hidden;
   }
-  .sm-fill { height: 100%; background: #6E8C6A; }
-  .sm-fill.warn { background: #C9A85A; }
+  /* Status tokens mirror the app's --status-ok / --status-warn, with the
+   * app's lifted dark-mode variants. */
+  .sm-app { --sm-ok: #6e8c6a; --sm-warn: #c9a85a; }
+  @media (prefers-color-scheme: dark) {
+    .sm-app { --sm-ok: #94b58f; --sm-warn: #e0bb6a; }
+  }
+  .sm-fill { height: 100%; background: var(--sm-ok); }
+  .sm-fill.warn { background: var(--sm-warn); }
   .sm-fill.high { background: var(--accent); }
 
   .sm-main {
@@ -137,10 +141,10 @@ mock:
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #6E8C6A;
+    background: var(--sm-ok);
     margin-right: 8px;
   }
-  .sm-row .dot.warn { background: #C9A85A; }
+  .sm-row .dot.warn { background: var(--sm-warn); }
   .sm-row .dot.high { background: var(--accent); }
   .sm-row .pid {
     color: var(--muted);
@@ -168,7 +172,7 @@ mock:
   }
   .sm-head .pid, .sm-head .val { color: inherit; }
   /* One row depicted hovered — the quit (✕) button is visible. */
-  .sm-row.hover { background: rgba(48, 52, 63, 0.04); }
+  .sm-row.hover { background: rgba(var(--ink-rgb), 0.04); }
 
   @media (max-width: 720px) {
     .sm-app { grid-template-columns: 1fr; }
@@ -203,7 +207,7 @@ mock:
     <div class="sm-winbtns">─ ▢ ✕</div>
     <div class="sm-strip">
       <div class="sm-strip-head"><span class="sm-strip-label">CPU</span><span class="sm-strip-value">34%</span></div>
-      <div class="sm-strip-bar"><div class="sm-strip-fill" style="width: 34%; background: #C9A85A"></div></div>
+      <div class="sm-strip-bar"><div class="sm-strip-fill" style="width: 34%; background: var(--sm-warn)"></div></div>
       <div class="sm-strip-sub">8 cores</div>
     </div>
     <div class="sm-filter">Filter by name…</div>
