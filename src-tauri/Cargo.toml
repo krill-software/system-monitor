@@ -1,6 +1,6 @@
 [package]
 name = "krill-system-monitor"
-version = "0.1.0"
+version = "0.2.1"
 description = "A glanceable system-load hint for Linux"
 authors = ["Filip"]
 edition = "2021"

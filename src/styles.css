@@ -5,7 +5,6 @@
  * strip (window controls), the aux hamburger menu, and the version
  * about-line all come from desktop-ui. Only system-monitor's own
  * surfaces (sidebar nav rows, system strips, list rows) live here.
- * The aux pane is subtly tinted.
  *
  * Type rules (binding):
  *  - Bundled --fm-mono only — JetBrains Mono, which ships with
@@ -43,10 +42,7 @@ body {
 
 /* === Aux pane ====================================================== */
 
-/* Subtle sidebar tint; main stays pure Ghost White. */
 #aux {
-  background: rgba(48, 52, 63, 0.03);
-  border-right: 0;
   display: flex;
   flex-direction: column;
   padding: 0;
